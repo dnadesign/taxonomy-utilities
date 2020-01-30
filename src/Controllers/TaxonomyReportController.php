@@ -25,7 +25,8 @@ class TaxonomyReportController extends Controller
     ];
 
     private static $allowed_actions = [
-        'list'
+        'list',
+        'refresh'
     ];
 
     // Action to list Objects returned by a search
