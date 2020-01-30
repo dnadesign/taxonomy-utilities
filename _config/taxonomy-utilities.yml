@@ -1,0 +1,9 @@
+---
+Name: taxonomy-utilities
+After:
+  - '#rootroutes'
+  - '#coreroutes'
+---
+SilverStripe\Control\Director:
+  rules:
+    'taxonomysearchreport//$Action/$ID': 'DNADesign\Taxonomy\Utilities\Controllers\TaxonomyReportController'

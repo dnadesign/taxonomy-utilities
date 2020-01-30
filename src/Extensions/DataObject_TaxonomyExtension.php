@@ -17,7 +17,7 @@ class DataObject_TaxonomyExtension extends DataExtension
     ];
 
     /**
-     * Provide interface to manage TaxonomyTerms 
+     * Provide interface to manage TaxonomyTerms
      * on a DataObject
      *
      * @param FieldList $fields
@@ -80,5 +80,13 @@ class DataObject_TaxonomyExtension extends DataExtension
         }
 
         return null;
+    }
+
+    /**
+     * Helper
+     */
+    public function IsTagged()
+    {
+        return true;
     }
 }

@@ -3,6 +3,8 @@
 namespace DNADesign\Taxonomy\Utilities\Controllers;
 
 use DNADesign\Taxonomy\Utilities\Search\TaxonomySearchIndex;
+use SilverStripe\Control\Controller;
+use SilverStripe\Core\ClassInfo;
 use SilverStripe\Forms\CheckboxSetField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\Form;
@@ -10,13 +12,23 @@ use SilverStripe\Forms\FormAction;
 use SilverStripe\FullTextSearch\Search\Criteria\SearchCriteria;
 use SilverStripe\FullTextSearch\Search\Criteria\SearchCriterion;
 use SilverStripe\FullTextSearch\Search\Queries\SearchQuery;
+use SilverStripe\ORM\DataObject;
 use SilverStripe\Taxonomy\TaxonomyTerm;
 
-class TaggableSearchPageController extends Controller
+class TaxonomyReportController extends Controller
 {
+    protected $templates = [
+        'index' => 'TaxonomyReport'
+    ];
+
     private static $allowed_actions = [
         'TagSearchForm'
     ];
+
+    public function init()
+    {
+        parent::init();
+    }
 
     public function TagSearchForm()
     {
@@ -83,5 +95,20 @@ class TaggableSearchPageController extends Controller
         $results = $index->search($query, $offset, $limit, $params);
 
         return $results;
+    }
+
+    /**
+     * Retrieve the list of classes that implements the DataObject_TaxonomyExtension
+     *
+     * @return array
+     */
+    public static function get_classes_to_index()
+    {
+        $classes = ClassInfo::subclassesFor(DataObject::class);
+        $classes = array_filter($classes, function ($class) {
+            return ClassInfo::hasMethod(singleton($class), 'IsTagged');
+        });
+        
+        return $classes;
     }
 }

@@ -2,8 +2,9 @@
 
 namespace DNADesign\Taxonomy\Utilities\Search;
 
-use Document;
 use DNADesign\Extensions\FacetedSearchExtension;
+use DNADesign\Taxonomy\Utilities\Controllers\TaxonomyReportController;
+use Document;
 use SilverStripe\FullTextSearch\Solr\SolrIndex;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
@@ -25,7 +26,10 @@ class TaxonomySearchIndex extends SolrIndex
     public function init()
     {
         // Search all page types that are tagged
-        $this->addClass(Document::class);
+        $classes = TaxonomyReportController::get_classes_to_index();
+        foreach ($classes as $class) {
+            $this->addClass($class);
+        }
         
         // Add Tags
         $this->addFilterField('Tags.ID');

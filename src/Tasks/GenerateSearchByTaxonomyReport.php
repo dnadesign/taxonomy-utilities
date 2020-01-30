@@ -2,38 +2,49 @@
 
 namespace DNADesign\Taxonomy\Utilities\Tasks;
 
+use DNADesign\Taxonomy\Utilities\Controllers\TaxonomyReportController;
+use DNADesign\Taxonomy\Utilities\Models\TaxonomySearchReport;
+use DNADesign\Taxonomy\Utilities\Models\TaxonomySearchReportEntry;
 use SilverStripe\Dev\BuildTask;
 use SilverStripe\Taxonomy\TaxonomyTerm;
-use Taggable\TaggableReport;
-use Taggable\TaggableReportEntry;
-use Taggable\TaggableSearchPageController;
 
 class GenerateSearchByTaxonomyReport extends BuildTask
 {
-    private static $segment = 'taxonomy-search-report';
+    protected $title = 'Generate a search by taxonomy report';
+
+    private static $segment = 'generatetaxonomysearchreport';
 
     private $threshold = 10;
     private $reportID = 0;
 
     public function run($request)
     {
-        $docs = Document::get();
         $tags = TaxonomyTerm::get()->sort('ID ASC');
-        $controller = new TaggableSearchPageController();
         
-        $report = new TaggableReport();
+        // Create report object to hold entries
+        $report = new TaxonomySearchReport();
         $report->write();
-        $this->report = $report;
+        $this->reportID = $report->ID;
 
+        // Search tag by tag
         foreach ($tags as $tag) {
             // Search with one Tag
             $this->doSearchForTags([$tag->ID]);
         }
+
+        echo sprintf('Found %s search that would exceed the %s max result threshold.', $report->Entries()->count(), $this->threshold);
     }
 
+    /**
+     * Recursively check if a search facets would exceed the threshold
+     * and create a report entry accordingly
+     *
+     * @param array $tags
+     * @return void
+     */
     public function doSearchForTags($tags = [])
     {
-        $controller = new TaggableSearchPageController();
+        $controller = new TaxonomyReportController();
         $results = $controller->getListOfResults($tags);
 
         $matches = $results->getField('Matches');
@@ -52,12 +63,20 @@ class GenerateSearchByTaxonomyReport extends BuildTask
         }
     }
 
+    /**
+     * Record a search that has exceed the threshold
+     * on a TaxonomySearchReportEntry object
+     *
+     * @param array $tags
+     * @param int $count
+     * @return void
+     */
     public function recordOverThresholdSearch($tags, $count)
     {
-        $entry = new TaggableReportEntry();
-        $entry->Signature = TaggableReportEntry::generateSignature($tags);
+        $entry = new TaxonomySearchReportEntry();
+        $entry->Signature = TaxonomySearchReportEntry::generateSignature($tags);
         $entry->ResultCount = $count;
-        $entry->ReportID = $this->report->ID;
+        $entry->ReportID = $this->reportID;
 
         if (!$entry->alreadyExists()) {
             $entry->write();
