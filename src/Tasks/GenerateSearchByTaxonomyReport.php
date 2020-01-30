@@ -14,7 +14,7 @@ class GenerateSearchByTaxonomyReport extends BuildTask
 
     private static $segment = 'generatetaxonomysearchreport';
 
-    private $threshold = 10;
+    private $threshold = 3;
     private $reportID = 0;
 
     public function run($request)

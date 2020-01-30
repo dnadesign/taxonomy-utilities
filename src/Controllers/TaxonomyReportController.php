@@ -2,6 +2,8 @@
 
 namespace DNADesign\Taxonomy\Utilities\Controllers;
 
+use DNADesign\Taxonomy\Utilities\Models\TaxonomySearchReport;
+use DNADesign\Taxonomy\Utilities\Models\TaxonomySearchReportEntry;
 use DNADesign\Taxonomy\Utilities\Search\TaxonomySearchIndex;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\ClassInfo;
@@ -14,6 +16,7 @@ use SilverStripe\FullTextSearch\Search\Criteria\SearchCriterion;
 use SilverStripe\FullTextSearch\Search\Queries\SearchQuery;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Taxonomy\TaxonomyTerm;
+use SilverStripe\View\ArrayData;
 
 class TaxonomyReportController extends Controller
 {
@@ -22,39 +25,24 @@ class TaxonomyReportController extends Controller
     ];
 
     private static $allowed_actions = [
-        'TagSearchForm'
+        'list'
     ];
 
-    public function init()
+    // Action to list Objects returned by a search
+    public function list()
     {
-        parent::init();
-    }
-
-    public function TagSearchForm()
-    {
-        $tags = TaxonomyTerm::get()->sort('ID ASC')->map('ID', 'Name')->toArray();
-        array_walk($tags, function (&$item, $key) {
-            return $item = sprintf('%s [%s]', $item, $key);
-        });
-
-        $fields = new FieldList([
-            CheckboxSetField::create('tags', 'Tags', $tags)
-        ]);
-        $actions = new FieldList([
-            FormAction::create('doFilter', 'Filter')
-        ]);
-
-        $form = new Form($this, 'TagSearchForm', $fields, $actions);
-        $form->setFormMethod('GET');
-        $form->disableSecurityToken();
-        $form->loadDataFrom($this->getRequest()->getVars());
-
-        return $form;
-    }
-
-    public function doFilter()
-    {
-        return $this;
+        $entry = TaxonomySearchReportEntry::get()->byID($this->getRequest()->latestParam('ID'));
+        if ($entry) {
+            $tags = $entry->getTagList();
+            if ($tags) {
+                return $this->customise(new Arraydata([
+                    'Tags' => $tags,
+                    'Objects' => $this->getListOfResults($tags->column('ID'))
+                ]))->renderWith('TaxonomyReport_list');
+            }
+        }
+        
+        return $this->httpError(404);
     }
 
     public function getListOfResults($tagsParam = [])
@@ -110,5 +98,13 @@ class TaxonomyReportController extends Controller
         });
         
         return $classes;
+    }
+
+    public function getLatestReportEntries()
+    {
+        $report = TaxonomySearchreport::get()->Last();
+        if ($report && $report->exists()) {
+            return $report->Entries();
+        }
     }
 }

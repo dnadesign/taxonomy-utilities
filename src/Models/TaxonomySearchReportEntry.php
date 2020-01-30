@@ -2,6 +2,7 @@
 
 namespace DNADesign\Taxonomy\Utilities\Models;
 
+use DNADesign\Taxonomy\Utilities\Controllers\TaxonomyReportController;
 use DNADesign\Taxonomy\Utilities\Models\TaxonomySearchReport;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
@@ -30,6 +31,8 @@ class TaxonomySearchReportEntry extends DataObject
         'getTagsSummary' => 'Tags',
         'getSearchLink' => 'View results'
     ];
+
+    private static $default_sort = 'ResultCount DESC';
 
     public function getTagList()
     {
@@ -103,18 +106,6 @@ class TaxonomySearchReportEntry extends DataObject
 
     public function getSearchLink()
     {
-        $page = TaggableSearchPage::get()->First();
-        if ($page) {
-            $tags = $this->getTagList()->column('ID');
-            array_walk($tags, function (&$item) {
-                return $item = '?tags[]='.$item;
-            });
-            $pageLink = $page->Link() == '/' ? 'home' : $page->AbsoluteLink();
-            $url = Controller::join_links(Director::absoluteBaseURL(), $pageLink, 'TagSearchForm', '?action_doFilter=Filter', implode('', $tags));
-            $link = sprintf('<a href="%s" target="_blank">View results</a>', $url);
-            return DBHTMLText::create('Tags')->setValue($link);
-        }
-
-        return null;
+        return Controller::join_links(Director::absoluteBaseURL(), 'taxonomysearchreport', 'list', $this->ID);
     }
 }
