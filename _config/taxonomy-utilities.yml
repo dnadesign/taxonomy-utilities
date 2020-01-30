@@ -7,3 +7,7 @@ After:
 SilverStripe\Control\Director:
   rules:
     'taxonomysearchreport//$Action/$ID': 'DNADesign\Taxonomy\Utilities\Controllers\TaxonomyReportController'
+
+SilverStripe\Taxonomy\TaxonomyAdmin:
+  extensions:
+    - DNADesign\Taxonomy\Utilities\Extensions\TaxonomyAdmin_ReportExtension
