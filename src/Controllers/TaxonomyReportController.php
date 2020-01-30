@@ -65,7 +65,7 @@ class TaxonomyReportController extends Controller
         }
 
         // Limit search
-        $limit = 10;
+        $limit = 20;
         $offset = $request->getVar('start');
 
         // Extra params
@@ -100,9 +100,14 @@ class TaxonomyReportController extends Controller
         return $classes;
     }
 
+    /**
+     * Return the Report Entries from the last TaxonomySearchReport
+     *
+     * @return DataList
+     */
     public function getLatestReportEntries()
     {
-        $report = TaxonomySearchreport::get()->Last();
+        $report = TaxonomySearchReport::get()->Last();
         if ($report && $report->exists()) {
             return $report->Entries();
         }

@@ -82,6 +82,7 @@
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
+                                            <th class="border-top-0"></th>
                                             <th class="border-top-0">TYPE</th>
                                             <th class="border-top-0">TITLE/NAME</th>
                                             <th class="border-top-0">TAGS</th>
@@ -91,6 +92,7 @@
                                     <tbody>
                                         <% loop $Objects.Matches %>
                                         <tr>         
+                                            <td class="txt-oflo">$Pos</td>
                                             <td class="txt-oflo">$singular_name</td>
                                             <td class="txt-oflo"><% if $Title %>$Title<% else %>$Name<% end_if %></td>                           
                                             <td class="txt-oflo">
@@ -107,6 +109,34 @@
                                 </table>
                             </div>
                         </div>
+                    </div>
+
+                        <div class="col-12">
+                            <div class="text-xs-center">
+                        <% with $Objects.Matches %>
+                            <% if $MoreThanOnePage %>
+                            <ul class="pagination justify-content-center">
+                                <% if $NotFirstPage %>
+                                    <li class="page-item"><a class="page-link" href=" $PrevLink">Prev</a>
+                                <% end_if %>
+                                <% loop $PaginationSummary(4) %>
+                                    <% if CurrentBool %>
+                                        <li class="page-item"><span class="page-link">$PageNum</span></li>
+                                    <% else %>
+                                        <% if Link %>
+                                            <li class="page-item"><a href="$Link" class="page-link">$PageNum</a></li>
+                                        <% else %>
+                                            <li class="page-item">...</li>
+                                        <% end_if %>
+                                    <% end_if %>
+                                <% end_loop %>
+                                <% if $NotLastPage %>
+                                    <li class="page-item"><a class="next" href=" $NextLink" class="page-link">Next</a></li>
+                                <% end_if %>
+                            </ul>
+                            <% end_if %>
+                        <% end_with %>
+                            </div>
                     </div>
                 </div>               
                     
