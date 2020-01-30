@@ -15,6 +15,7 @@ use SilverStripe\FullTextSearch\Search\Criteria\SearchCriteria;
 use SilverStripe\FullTextSearch\Search\Criteria\SearchCriterion;
 use SilverStripe\FullTextSearch\Search\Queries\SearchQuery;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\PaginatedList;
 use SilverStripe\Taxonomy\TaxonomyTerm;
 use SilverStripe\View\ArrayData;
 
@@ -37,7 +38,7 @@ class TaxonomyReportController extends Controller
             if ($tags) {
                 return $this->customise(new Arraydata([
                     'Tags' => $tags,
-                    'Objects' => $this->getListOfResults($tags->column('ID'))
+                    'Results' => $this->getListOfResults($tags->column('ID'))
                 ]))->renderWith('TaxonomyReport_list');
             }
         }
@@ -46,7 +47,7 @@ class TaxonomyReportController extends Controller
     }
 
     /**
-     * Generate a Paginated List from a Solr Search
+     * Generate  a Paginated List from a Solr Search
      * looking for all instance of DataObject that have the TaxonomyExtension
      * and match the TaxonomyTerm supplied
      *
@@ -59,14 +60,14 @@ class TaxonomyReportController extends Controller
 
         // Build query
         $query = SearchQuery::create();
-
+ 
         // Add tag filters
         $tags = !empty($tagsParam) ? $tagsParam : $request->requestVar('tags');
         if ($tags) {
             $criteria = SearchCriteria::create(SearchCriterion::create('_tags', array_shift($tags), SearchCriterion::EQUAL));
             if (count($tags) > 0) {
                 foreach ($tags as $tagID) {
-                    $criteria->addAnd(SearchCriteria::create(SearchCriterion::create('_tags', $tagID, SearchCriterion::EQUAL)));
+                    $criteria->addAnd(SearchCriterion::create('_tags', $tagID, SearchCriterion::EQUAL));
                 }
             }
             $query->filterBy($criteria);
@@ -111,13 +112,23 @@ class TaxonomyReportController extends Controller
     /**
      * Return the Report Entries from the last TaxonomySearchReport
      *
-     * @return DataList
+     * @return PaginatedList
      */
     public function getLatestReportEntries()
     {
         $report = TaxonomySearchReport::get()->Last();
         if ($report && $report->exists()) {
-            return $report->Entries();
+            $list = new PaginatedList($report->Entries(), $this->getRequest());
+            $list->setPageLength(20);
+            return $list;
         }
+    }
+
+    /**
+     * Helper
+     */
+    public function getEntryNumber($start, $pos)
+    {
+        return (int) $start + (int) $pos;
     }
 }

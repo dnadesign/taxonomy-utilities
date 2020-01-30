@@ -77,6 +77,7 @@
                                 <table class="table table-hover">
                                     <thead>
                                         <tr>
+                                            <th class="border-top-0"></th> 
                                             <th class="border-top-0">DATE</th>
                                             <th class="border-top-0">SEARCH TERMS</th>
                                             <th class="border-top-0">RESULT COUNT</th>
@@ -85,7 +86,8 @@
                                     </thead>
                                     <tbody>
                                         <% loop $LatestReportEntries %>
-                                        <tr>         
+                                        <tr>
+                                            <td class="txt-oflo">$Top.getEntryNumber($Up.LatestReportEntries.PageStart, $Pos)</td>   
                                             <td class="txt-oflo">$ReportedOn</td>                                 
                                             <td class="txt-oflo">
                                                 <% loop $TagList %>
@@ -101,7 +103,35 @@
                             </div>
                         </div>
                     </div>
-                </div>               
+                </div>
+
+                <div class="col-12">
+                    <div class="text-xs-center">
+                        <% with $LatestReportEntries %>
+                            <% if $MoreThanOnePage %>
+                            <ul class="pagination justify-content-center">
+                                <% if $NotFirstPage %>
+                                    <li class="page-item"><a class="page-link" href=" $PrevLink">Prev</a>
+                                <% end_if %>
+                                <% loop $PaginationSummary(4) %>
+                                    <% if CurrentBool %>
+                                        <li class="page-item active"><span class="page-link">$PageNum</span></li>
+                                    <% else %>
+                                        <% if Link %>
+                                            <li class="page-item"><a href="$Link" class="page-link">$PageNum</a></li>
+                                        <% else %>
+                                            <li class="page-item">...</li>
+                                        <% end_if %>
+                                    <% end_if %>
+                                <% end_loop %>
+                                <% if $NotLastPage %>
+                                    <li class="page-item"><a class="next" href=" $NextLink" class="page-link">Next</a></li>
+                                <% end_if %>
+                            </ul>
+                            <% end_if %>
+                        <% end_with %>
+                    </div>
+                </div>         
                     
             </div>
             <!-- ============================================================== -->
