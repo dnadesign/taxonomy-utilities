@@ -14,8 +14,7 @@ if (!class_exists(SolrIndex::class)) {
 }
 
 /**
- * Provides ability to index Elemental content for a page, so it can be returned in the context of the page
- * that the elements belong to
+ * Indexes every class that have the TaxonomyExtension
  */
 class TaxonomySearchIndex extends SolrIndex
 {

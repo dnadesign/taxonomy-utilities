@@ -7,6 +7,11 @@ use SilverStripe\Core\Extension;
 
 class TaxonomyAdmin_ReportExtension extends Extension
 {
+    /**
+     * Add a direct link to the reporting interface
+     *
+     * @return void
+     */
     public function updateEditForm($form)
     {
         $class = str_replace('\\', '-', $this->owner->modelClass);

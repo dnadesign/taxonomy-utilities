@@ -25,8 +25,7 @@ class TaxonomyReportController extends Controller
     ];
 
     private static $allowed_actions = [
-        'list',
-        'refresh'
+        'list'
     ];
 
     // Action to list Objects returned by a search
@@ -46,6 +45,14 @@ class TaxonomyReportController extends Controller
         return $this->httpError(404);
     }
 
+    /**
+     * Generate a Paginated List from a Solr Search
+     * looking for all instance of DataObject that have the TaxonomyExtension
+     * and match the TaxonomyTerm supplied
+     *
+     * @param array $tagsParam
+     * @return PaginatedList
+     */
     public function getListOfResults($tagsParam = [])
     {
         $request = $this->getRequest();

@@ -20,7 +20,7 @@ class GridFieldTaxonomyReportButton implements GridField_HTMLProvider
     }
 
     /**
-     * Place the export button in a <p> tag below the field
+     * Create a link button to the reporting interface
      *
      * @param GridField $gridField
      * @return array

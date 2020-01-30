@@ -34,6 +34,11 @@ class TaxonomySearchReportEntry extends DataObject
 
     private static $default_sort = 'ResultCount DESC';
 
+    /**
+     * Return the list of TaxonomyTerms from the signature
+     *
+     * @return DataList
+     */
     public function getTagList()
     {
         if ($this->Signature) {
@@ -46,6 +51,13 @@ class TaxonomySearchReportEntry extends DataObject
         return null;
     }
 
+    /**
+     * Return a formatted list of the TaxonomyTerms
+     * recorded in the signature
+     * grouped by TaxonomyType
+     *
+     * @return DBHTMLText
+     */
     public function getTagsSummary()
     {
         $groupedTags = $this->getGroupedTags();
@@ -74,6 +86,13 @@ class TaxonomySearchReportEntry extends DataObject
         return null;
     }
 
+    /**
+     * Generate a string to record the TaxonomyTerms
+     * in one Varchar field
+     *
+     * @param array $tags
+     * @return string
+     */
     public static function generateSignature($tags = [])
     {
         if (!empty($tags)) {
@@ -87,6 +106,11 @@ class TaxonomySearchReportEntry extends DataObject
         return null;
     }
 
+    /**
+     * Check if a record with the same signature for the same report already exists in DB
+     *
+     * @return void
+     */
     public function alreadyExists()
     {
         if ($this->Signature && $this->ResultCount && $this->ReportID) {
@@ -96,6 +120,11 @@ class TaxonomySearchReportEntry extends DataObject
         return false;
     }
 
+    /**
+     * Return the report Created date
+     *
+     * @return string
+     */
     public function getReportedOn()
     {
         $report = $this->Report();
@@ -104,6 +133,11 @@ class TaxonomySearchReportEntry extends DataObject
         }
     }
 
+    /**
+     * Generate a link to this Entry for the report
+     *
+     * @return string
+     */
     public function getSearchLink()
     {
         return Controller::join_links(Director::absoluteBaseURL(), 'taxonomysearchreport', 'list', $this->ID);
