@@ -17,7 +17,8 @@ class TaxonomySearchReportEntry extends DataObject
 
     private static $db = [
         'Signature' => 'Varchar(255)',
-        'ResultCount' => 'Int'
+        'ResultCount' => 'Int',
+        'TagCount' => 'Int'
     ];
 
     private static $has_one = [
@@ -32,7 +33,7 @@ class TaxonomySearchReportEntry extends DataObject
         'getSearchLink' => 'View results'
     ];
 
-    private static $default_sort = 'ResultCount DESC';
+    private static $default_sort = 'TagCount DESC, ResultCount DESC';
 
     /**
      * Return the list of TaxonomyTerms from the signature

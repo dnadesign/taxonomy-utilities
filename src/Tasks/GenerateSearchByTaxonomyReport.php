@@ -6,6 +6,7 @@ use DNADesign\Taxonomy\Utilities\Controllers\TaxonomyReportController;
 use DNADesign\Taxonomy\Utilities\Models\TaxonomySearchReport;
 use DNADesign\Taxonomy\Utilities\Models\TaxonomySearchReportEntry;
 use SilverStripe\Dev\BuildTask;
+use SilverStripe\ORM\Queries\SQLDelete;
 use SilverStripe\Taxonomy\TaxonomyTerm;
 
 class GenerateSearchByTaxonomyReport extends BuildTask
@@ -14,7 +15,7 @@ class GenerateSearchByTaxonomyReport extends BuildTask
 
     private static $segment = 'generatetaxonomysearchreport';
 
-    private static $threshold = 5;
+    private static $threshold = 10;
 
     private $reportID = 0;
 
@@ -35,7 +36,12 @@ class GenerateSearchByTaxonomyReport extends BuildTask
             $this->doSearchForTags([$tag->ID]);
         }
 
-        echo sprintf('Found %s search that would exceed the %s max result threshold.', $report->Entries()->count(), $this->config()->threshold);
+        echo sprintf('Created %s entries before optimising report %s', $report->Entries()->count(), PHP_EOL);
+
+        // Remove the least specific entries
+        $this->optimiseReport($report);
+
+        echo sprintf('Found %s search that would exceed the %s max result threshold with no more further filters available.', $report->Entries()->count(), $this->config()->threshold);
     }
 
     /**
@@ -84,11 +90,53 @@ class GenerateSearchByTaxonomyReport extends BuildTask
         $entry->Signature = TaxonomySearchReportEntry::generateSignature($tags);
         $entry->ResultCount = $count;
         $entry->ReportID = $this->reportID;
+        $entry->TagCount = count($tags);
 
         if (!$entry->alreadyExists()) {
+            // Remove searches with less tags than this search
+            $lessSpecificSearches = TaxonomySearchReportEntry::get()->filter([
+                'ReportID' => $this->reportID,
+                'Signature:StartsWith' => $entry->Signature,
+                'TagCount:LessThan' => $entry->TagCount
+            ]);
+
             $this->debug ?: $entry->write();
             $this->doSearchForTags($tags);
             echo sprintf('Searching by tag "%s" will return %s results %s', $entry->Signature, $entry->ResultCount, PHP_EOL);
+        }
+    }
+
+    /**
+     * Remove every entry that is less specific that the most specific search possible
+     * Reported to be over the threshold which therefore cannot be further refined.
+     *
+     * @param TaxonomySearchReport $report
+     * @return void
+     */
+    public function optimiseReport($report)
+    {
+        $prevSignatures  = [];
+        $maxTag = $report->Entries()->max('TagCount');
+        for ($i = $maxTag; $i > 0; $i--) {
+            $signatures = $report->Entries()->filter('TagCount', $i)->column('Signature');
+            foreach ($signatures as $signature) {
+                $ids = explode('+', $signature);
+                for ($j = 0; $j < count($ids)-1; $j++) {
+                    $prevSignature = (isset($prevSignatures[$j - 1])) ? $prevSignatures[$j - 1].'+'.$ids[$j] : $ids[$j];
+                    array_push($prevSignatures, $prevSignature);
+                }
+            }
+        }
+
+        $lessSpecificSearches = TaxonomySearchReportEntry::get()->filter([
+            'ReportID' => $report->ID,
+            'Signature' => $prevSignatures
+        ]);
+        
+        if ($lessSpecificSearches->count() > 0) {
+            $where = sprintf('ID IN (%s)', implode(',', $lessSpecificSearches->column('ID')));
+            $query = SQLDelete::create('TaxonomySearchReportEntry', $where);
+            $query->execute();
         }
     }
 }
