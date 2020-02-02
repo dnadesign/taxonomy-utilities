@@ -6,6 +6,7 @@ use DNADesign\Taxonomy\Utilities\Models\TaxonomySearchReport;
 use DNADesign\Taxonomy\Utilities\Models\TaxonomySearchReportEntry;
 use DNADesign\Taxonomy\Utilities\Search\TaxonomySearchIndex;
 use SilverStripe\Control\Controller;
+use SilverStripe\Control\Director;
 use SilverStripe\Core\ClassInfo;
 use SilverStripe\Forms\CheckboxSetField;
 use SilverStripe\Forms\FieldList;
@@ -22,11 +23,13 @@ use SilverStripe\View\ArrayData;
 class TaxonomyReportController extends Controller
 {
     protected $templates = [
-        'index' => 'TaxonomyReport'
+        'index' => 'TaxonomyReport',
+        'search' => 'TaxonomyReport_search'
     ];
 
     private static $allowed_actions = [
-        'list'
+        'list',
+        'search'
     ];
 
     // Action to list Objects returned by a search
@@ -38,12 +41,48 @@ class TaxonomyReportController extends Controller
             if ($tags) {
                 return $this->customise(new Arraydata([
                     'Tags' => $tags,
-                    'Results' => $this->getListOfResults($tags->column('ID'))
+                    'Results' => $this->getListOfResults($tags->column('ID')),
+                    'LinkToSearch' => $this->getLinkToSearch($tags->column('ID'), $entry->ID)
                 ]))->renderWith('TaxonomyReport_list');
             }
         }
         
         return $this->httpError(404);
+    }
+
+    /**
+     * Action to perform a "manual" search based on TaxonomyTerms
+     *
+     * @return Controller
+     */
+    public function search($data = null, $request = null)
+    {
+        return $this;
+    }
+
+    /**
+     * Return a form listing every TaxonomyTerm available
+     * so to perform a search the same way the reporting task does
+     *
+     * @return Form
+     */
+    public function TaxonomySearchForm()
+    {
+        $fields = FieldList::create([
+            CheckboxSetField::create('tags', '', TaxonomyTerm::get()->sort('Name ASC')->map()->toArray())
+        ]);
+
+        $actions = FieldList::create([
+            FormAction::create('search', 'Search')
+        ]);
+
+        $form = new Form($this, 'TaxonomySearchForm', $fields, $actions);
+        $form->setFormMethod('GET');
+        $form->disableSecurityToken();
+        $form->loadDataFrom($this->getRequest()->getVars());
+        $form->setFormAction('taxonomysearchreport/search');
+
+        return $form;
     }
 
     /**
@@ -130,5 +169,22 @@ class TaxonomyReportController extends Controller
     public function getEntryNumber($start, $pos)
     {
         return (int) $start + (int) $pos;
+    }
+
+    public function getLinkToSearch($tags = [], $reportID)
+    {
+        if (!empty($tags)) {
+            array_walk($tags, function (&$item) {
+                return $item = '&tags[]='.$item;
+            });
+        }
+
+        $url = Controller::join_links(Director::absoluteBaseURL(), 'taxonomysearchreport/search/TagSearchForm', '?action_search=Search'.implode('', $tags).'&referrer='.$reportID);
+        return $url;
+    }
+
+    public function getReferrerID()
+    {
+        return $this->getRequest()->getVar('referrer');
     }
 }

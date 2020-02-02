@@ -15,7 +15,7 @@ class GenerateSearchByTaxonomyReport extends BuildTask
 
     private static $segment = 'generatetaxonomysearchreport';
 
-    private static $threshold = 10;
+    private static $threshold = 2;
 
     private $reportID = 0;
 
@@ -36,11 +36,6 @@ class GenerateSearchByTaxonomyReport extends BuildTask
             $this->doSearchForTags([$tag->ID]);
         }
 
-        echo sprintf('Created %s entries before optimising report %s', $report->Entries()->count(), PHP_EOL);
-
-        // Remove the least specific entries
-        $this->optimiseReport($report);
-
         echo sprintf('Found %s search that would exceed the %s max result threshold with no more further filters available.', $report->Entries()->count(), $this->config()->threshold);
     }
 
@@ -54,6 +49,8 @@ class GenerateSearchByTaxonomyReport extends BuildTask
      */
     public function doSearchForTags($tags = [])
     {
+        echo sprintf('Search on tags %s %s', implode('|', $tags), PHP_EOL);
+
         $controller = new TaxonomyReportController();
         $results = $controller->getListOfResults($tags);
 
@@ -62,15 +59,29 @@ class GenerateSearchByTaxonomyReport extends BuildTask
 
         if ($count >= $this->config()->threshold) {
             $facets = $results->getField('FacetCounts')->find('Name', '_tags');
-            foreach ($facets->Facets as $facet) {
-                $tagID = (int) $facet->Name;
-                $count = (int) $facet->Count;
+            $facetResults = array_combine($facets->Facets->column('Name'), $facets->Facets->column('Count'));
+            foreach ($tags as $toRemove) {
+                if (isset($facetResults[$toRemove])) {
+                    unset($facetResults[$toRemove]);
+                }
+            }
+            $nextFacetSearchCount = array_sum(array_values($facetResults));
 
-                if ($count >= $this->config()->threshold) {
-                    // Need to remove duplicate ID as the facets also return the original ID
-                    // which then triggers an infinite loop
-                    $searchedTags = array_unique(array_merge($tags, [$tagID]));
-                    $this->recordOverThresholdSearch($searchedTags, $count);
+            // If there isn't any more facetted search results
+            // And this search is exceeding the threshold
+            // Then report it
+            if ($nextFacetSearchCount == 0) {
+                $this->recordOverThresholdSearch($tags, $count);
+            } else {
+                foreach ($facetResults as $tagID => $count) {
+                    if ($count >= $this->config()->threshold) {
+                        // Need to remove duplicate ID as the facets also return the original ID
+                        // which then triggers an infinite loop
+                        $searchedTags = array_unique(array_merge($tags, [$tagID]));
+                        if (count($searchedTags) > 1) {
+                            $this->doSearchForTags($searchedTags);
+                        }
+                    }
                 }
             }
         }
@@ -101,7 +112,6 @@ class GenerateSearchByTaxonomyReport extends BuildTask
             ]);
 
             $this->debug ?: $entry->write();
-            $this->doSearchForTags($tags);
             echo sprintf('Searching by tag "%s" will return %s results %s', $entry->Signature, $entry->ResultCount, PHP_EOL);
         }
     }

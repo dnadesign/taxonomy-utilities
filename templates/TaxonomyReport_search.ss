@@ -29,7 +29,7 @@
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav">
                         <li class="sidebar-item">
-                            <a class="sidebar-link waves-effect waves-dark sidebar-link" href="/taxonomysearchreport" aria-expanded="false">
+                            <a class="sidebar-link waves-effect waves-dark sidebar-link" href="/taxonomysearchreport/list/$ReferrerID" aria-expanded="false">
                                 <i class="mdi mdi-chevron-left"></i>
                                 <span class="hide-menu">Back</span>
                             </a>
@@ -51,17 +51,13 @@
             <!-- Bread crumb and right sidebar toggle -->
             <!-- ============================================================== -->
             <div class="page-breadcrumb">
-                <div class="row">
-                    <div class="col-5 align-self-center">
-                        <h4 class="page-title">$Results.Matches.TotalItems object tagged with 
-                            <% loop $Tags %>
-                            <span class="label label-primary">$Name</span>
-                        <% end_loop %>
-                            <a href="$LinkToSearch" class="label label-success">Search</a>
-                        </h4>
+                    <div class="row">
+                        <div class="col-5 align-self-center">
+                            <h4 class="page-title">$ListOfResults.Matches.TotalItems results
+                            </h4>
+                        </div>
                     </div>
                 </div>
-            </div>
             <!-- ============================================================== -->
             <!-- End Bread crumb and right sidebar toggle -->
             <!-- ============================================================== -->
@@ -72,6 +68,19 @@
                 <!-- ============================================================== -->
                 <!-- Ravenue - page-view-bounce rate -->
                 <!-- ============================================================== -->
+                <div class="row">
+                    <!-- column -->
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="">Search</h4>
+                            </div>
+                            <div class="card-body">
+                                $TaxonomySearchForm
+                            </div>
+                        </div>
+                    </div>
+                </div>                
                 <div class="row">
                     <!-- column -->
                     <div class="col-12">
@@ -91,13 +100,14 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <% loop $Results.Matches %>
-                                        <tr>         
-                                            <td class="txt-oflo">$Top.getEntryNumber($Top.Results.Matches.PageStart, $Pos)</td>
+                                    <% with $ListOfResults %>
+                                        <% loop $Matches %>
+                                        <tr>                                        
+                                            <td class="txt-oflo">$Top.getEntryNumber($PageStart, $Pos)</td>
                                             <td class="txt-oflo">$singular_name</td>
                                             <td class="txt-oflo"><% if $Title %>$Title<% else %>$Name<% end_if %></td>                           
                                             <td class="txt-oflo">
-                                                <% loop $Tags %>
+                                                <% loop $Tags.Sort('Name ASC') %>
                                                     <span class="label label-primary">$Name</span>
                                                 <% end_loop %>
                                             </td>
@@ -106,6 +116,7 @@
                                             <% end_if %>                                        
                                         </tr>
                                         <% end_loop %>
+                                    <% end_with %>
                                     </tbody>
                                 </table>
                             </div>
@@ -114,7 +125,7 @@
 
                     <div class="col-12">
                         <div class="text-xs-center">
-                            <% with $Results.Matches %>
+                            <% with $ListOfResults.Matches %>
                                 <% if $MoreThanOnePage %>
                                 <ul class="pagination justify-content-center">
                                     <% if $NotFirstPage %>
